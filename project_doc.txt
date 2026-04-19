@@ -1,0 +1,19 @@
+Setup -
+npx create-next-app@latest receipt-tracker --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+
+npm install convex 
+
+npm install ai @ai-sdk/anthropic
+
+setup API key in .env
+
+What is convex?
+ - convex is a modern backend framework written with Typescript.
+ - it handles:
+    Database
+    APIs
+    real-time updates
+    server logic
+ - essentially database + api in one as opposed to database seperated from api
+
+ defined database schema in convex/schema.ts
