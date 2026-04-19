@@ -15,6 +15,7 @@ export default defineSchema({
         fileUrl: v.string(),
         fileName: v.string(),
         uploadedAt: v.number(),
+        storageId: v.string(),
 
         // RAW OCR output - stores what Claude actually sees
         rawText: v.optional(v.string()),
@@ -29,7 +30,6 @@ export default defineSchema({
                 v.literal("Materials"),
                 v.literal("Tools & Equipment"),
                 v.literal("Supplies"),
-                v.literal("Labor"),
                 v.literal("Fuel & Transportation"),
                 v.literal("Misc")
             )

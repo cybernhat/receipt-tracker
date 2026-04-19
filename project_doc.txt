@@ -17,3 +17,5 @@ What is convex?
  - essentially database + api in one as opposed to database seperated from api
 
  defined database schema in convex/schema.ts
+
+ 
