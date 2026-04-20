@@ -44,7 +44,6 @@ export async function POST(req: Request) {
           }));
         },
       }),
-
       getLineItems: tool({
         description:
           "Fetch all individual line items across all receipts, each tagged with vendor and date. Use this for questions about specific products, categories (Materials, Tools & Equipment, Supplies, Fuel & Transportation, Misc), or item-level spending.",

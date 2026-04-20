@@ -4,12 +4,6 @@ import { useChat } from "@ai-sdk/react";
 import React, { useRef, useEffect, useState } from "react";
 
 export default function ChatPage() {
-    // useChat is the Vercel AI SDK hook that manages the entire chat state for you.
-    // - messages: array of all messages in the conversation (role: "user" | "assistant", content, etc.)
-    // - input: the current value of the text input field (controlled input)
-    // - handleInputChange: onChange handler that keeps `input` in sync as the user types
-    // - handleSubmit: onSubmit handler that sends the current `input` to /api/chat as a POST request
-    // - isLoading: true while waiting for a response from the API (used to disable input + show "Thinking...")
     const { messages, sendMessage, status } = useChat();
     const [input, setInput] = useState("");
 
