@@ -1,4 +1,4 @@
-import { streamText, tool } from "ai";
+import { stepCountIs, streamText, tool } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
@@ -7,16 +7,27 @@ import { z } from "zod";
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
-    const { messages } = await req.json();
+  const { messages } = await req.json();
 
-    const result = streamText({
-    model: anthropic("claude-3-5-sonnet-20241022"),
+  const formattedMessages = messages.map((m: any) => ({
+    role: m.role,
+    content: m.parts
+      ?.filter((p: any) => p.type === "text")
+      .map((p: any) => p.text)
+      .join("") ?? m.content ?? ""
+  }));
+
+  console.log("formatted:", JSON.stringify(formattedMessages, null, 2));
+  // Convert v6 UIMessage to ModelMessage format 
+  const result = streamText({
+    model: anthropic("claude-sonnet-4-5"),
     system: `You are an expense assistant for contractors.
     You have access to their uploaded receipt data.
     Answer questions about spending clearly and consisely.
     When you have price amounts, format dollar amounts like $123.45.
     If you're unsure, say so - DO NOT make up figures.`,
-    messages,
+    messages: formattedMessages,
+    stopWhen: stepCountIs(5),
     tools: {
       getReceipts: tool({
         description:
@@ -43,5 +54,6 @@ export async function POST(req: Request) {
         },
       }),
     },
-      })
+  })
+  return result.toUIMessageStreamResponse();
 }   
