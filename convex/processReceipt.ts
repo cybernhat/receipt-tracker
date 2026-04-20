@@ -50,6 +50,8 @@ export const updateReceiptData = mutation({
     handler: async (ctx, args) => {
         const { id, ...rest } = args;
         await ctx.db.patch(id, rest);
+        const updatedReceipt = await ctx.db.get(id);
+        console.log(updatedReceipt);
     }
 });
 
@@ -75,7 +77,10 @@ export const processReceipt = action({
         const fileResponse = await fetch(fileUrl);
         const fileBlob = await fileResponse.blob();
         const arrayBuffer = await fileBlob.arrayBuffer();
-        const base64Data = Buffer.from(arrayBuffer).toString("base64");
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binary = '';
+        uint8Array.forEach(byte => binary += String.fromCharCode(byte));
+        const base64Data = btoa(binary);
         const mimeType = (fileBlob.type === "image/jpg" ? "image/jpeg" : fileBlob.type) as "image/jpeg" | "image/png" | "application/pdf";
 
         // Send to Claude for extraction
@@ -87,7 +92,7 @@ export const processReceipt = action({
                 max_tokens: 1024,
                 // prompt 
                 messages: [
-                    {  
+                    {
                         role: "user", // user = me, assistant = Claude
                         content: [
                             // first part of prompt is the file upload (PDF or image)
@@ -151,8 +156,12 @@ Category guidelines:
             if (content.type !== "text") {
                 throw new Error("Unexpected response type from Claude");
             }
-            
-            const extracted = JSON.parse(content.text);
+            // console.log("Claude raw response: ", content.text);
+
+            // gets rid of piece of shit ```json ```
+            const cleanedText = content.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+            const extracted = JSON.parse(cleanedText);
 
             // Check if it's actually a receipt
             if (extracted.notAReceipt) {
@@ -176,6 +185,7 @@ Category guidelines:
                 items: extracted.items
 
             });
+
         } catch (error) {
             await ctx.runMutation(api.processReceipt.updateReceiptData, {
                 id: args.receiptId,

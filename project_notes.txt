@@ -27,3 +27,7 @@ What is convex?
 
 TRADEOFFS:
 using claude API only allows text. I can use OPenAi DALL-E to prompt for images. 
+
+
+SETBACKS:
+Claude JSON parsing - Claude answers include backticks (```json) wrapped around JSON response.

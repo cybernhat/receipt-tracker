@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { responseCookiesToRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export default function Home() {
   const [uploading, setUploading] = useState(false);
@@ -12,6 +11,8 @@ export default function Home() {
   const generateUploadUrl = useMutation(api.receipts.generateUploadUrl);
   const createReceipt = useMutation(api.receipts.createReceipt);
   const receipts = useQuery(api.receipts.getAllReceipts);
+  const processReceipt = useAction(api.processReceipt.processReceipt);
+  const deleteReceipt = useMutation(api.receipts.deleteReceipt);
 
   // File handling function in order to store uploaded file to db
   async function handleFileUpload(file: File) {
@@ -33,23 +34,35 @@ export default function Home() {
       // Upload the file directly to storage
       const response = await fetch(uploadUrl, {
         method: "POST",
-        headers: { "Content-Type": file.type},
+        headers: { "Content-Type": file.type },
         body: file
       });
-      
+
       const { storageId } = await response.json();
-      
+
       // Create receipt in the database
-      await createReceipt({
+      const receiptId = await createReceipt({
         storageId,
         fileName: file.name
-      });
+      })
+
+      await processReceipt({
+        receiptId,
+        storageId
+      })
+
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Upload failed. Please try again");
     } finally {
       setUploading(false);
+
+      //resets upload 
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
     };
+
+
   }
 
   // Drag/drop feature
@@ -74,11 +87,10 @@ export default function Home() {
 
         {/* Upload Zone */}
         <div
-          className={`border-2 border-dashed rounded-xl p-10 text-center mb-8 transition-colors ${
-            dragOver
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-gray-700 hover:border-gray-500"
-          }`}
+          className={`border-2 border-dashed rounded-xl p-10 text-center mb-8 transition-colors ${dragOver
+            ? "border-blue-500 bg-blue-500/10"
+            : "border-gray-700 hover:border-gray-500"
+            }`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
@@ -87,11 +99,10 @@ export default function Home() {
             {uploading ? "Uploading..." : "Drop your receipt here"}
           </p>
           <p className="text-gray-500 text-sm mb-4">Supports JPG, PNG, PDF</p>
-          <label className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            uploading
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-white text-gray-900 hover:bg-gray-200"
-          }`}>
+          <label className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-colors ${uploading
+            ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+            : "bg-white text-gray-900 hover:bg-gray-200"
+            }`}>
             {uploading ? "Uploading..." : "Choose File"}
             <input
               type="file"
@@ -136,15 +147,23 @@ export default function Home() {
                         ? `$${receipt.totalAmount.toFixed(2)}`
                         : "—"}
                     </p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
-                      receipt.status === "completed"
-                        ? "bg-green-500/20 text-green-400"
-                        : receipt.status === "failed"
+                    <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${receipt.status === "completed"
+                      ? "bg-green-500/20 text-green-400"
+                      : receipt.status === "failed"
                         ? "bg-red-500/20 text-red-400"
                         : "bg-yellow-500/20 text-yellow-400"
-                    }`}>
+                      }`}>
                       {receipt.status}
                     </span>
+                    <button
+                      onClick={() => deleteReceipt({
+                        id: receipt._id,
+                        storageId: receipt.storageId
+                      })}
+                      className="ml-2 text-xs text-red-400 hover:text-red-300 mt-1"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
