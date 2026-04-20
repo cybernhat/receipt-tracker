@@ -16,30 +16,10 @@ A contractor expense tracking tool that ingests receipt images and PDFs, extract
 
 ## Features
 
-- Upload receipt images (JPG, PNG) or PDFs via drag-and-drop or file picker
-- AI-powered OCR extracts structured data from receipts including vendor, date, line items, and total
-- Each line item is individually categorized (Materials, Tools & Equipment, Supplies, Fuel & Transportation, Misc) and typed (e.g. Lumber, Concrete, Fasteners)
-- Processed receipts are persisted in a Convex database with full item-level detail
-- Failed uploads (non-receipts, unreadable files) are flagged with an explanation and can be deleted
-- Natural language querying of expense data via an AI agent (e.g. "How much did I spend on materials at Home Depot this month?")
-
----
-
-## Project Structure
-
-```
-receipt-tracker/
-├── src/
-│   └── app/
-│       ├── page.tsx          # Main UI — upload, receipt list, query interface
-│       └── layout.tsx        # Root layout with Convex provider
-├── convex/
-│   ├── schema.ts             # Database schema
-│   ├── receipts.ts           # CRUD mutations and queries
-│   └── processReceipt.ts     # OCR action — calls Claude, updates DB
-└── .env.local                # API keys (not committed)
-```
-
+- Image Upload
+    - Upload or drag-and-drop receipt in the form of PDF or image files. 
+- AI Querying
+    - Natural language querying of expense data via an AI agent.
 ---
 
 ## Getting Started
@@ -56,7 +36,6 @@ receipt-tracker/
 
 ```bash
 git clone https://github.com/Cybernhat/receipt-tracker.git
-cd receipt-tracker
 ```
 
 2. Install dependencies
@@ -110,7 +89,7 @@ Convex action retrieves file, converts to base64
         ↓
 Claude Vision analyzes the receipt image
         ↓
-Structured JSON extracted (vendor, date, items, totals)
+Structured JSON extracted 
         ↓
 DB record updated (status: "completed")
         ↓
@@ -125,20 +104,21 @@ The AI agent receives the user's natural language question, queries the Convex d
 
 ## Key Design Decisions & Assumptions
 
-**Category per item, not per receipt**
+**Category per item, not per receipt** - 
 A single receipt from Home Depot might contain lumber (Materials), a hammer (Tools & Equipment), and tape (Supplies). Assigning one category to the whole receipt would lose that granularity. Instead, each line item is individually categorized by Claude during extraction.
 
-**`storageId` over `fileUrl`**
+**`storageId` over `fileUrl`** - 
 Convex Storage and Convex Database are separate systems. Rather than storing a URL that could expire, we store the `storageId` and generate a fresh URL on demand using `ctx.storage.getUrl(storageId)`. This is more reliable and avoids stale URL issues.
 
-**Raw text stored alongside structured data**
+**Raw text stored alongside structured data** - 
 The full OCR text Claude reads from the receipt is stored in `rawText`. This provides a fallback for debugging misparses and makes the data more auditable.
 
-**Failed uploads are surfaced, not silently deleted**
-If Claude determines the uploaded file is not a receipt, or cannot read it, the record is marked `failed` with an explanation in `extractionNotes`. The user can then manually delete it. This avoids silent data loss and gives the contractor context on what went wrong.
+**
+**Failed uploads are surfaced, not silently deleted** -
+If uploaded file fails to extract data from file (not a receipt, blurry, etc..), it will be marked as `failed` instead of automatically deleted and generate an `extractionNotes`. This allows context to aid in debugging in the future.
 
-**Screws, tape, and connectors are categorized as Supplies**
-Items that could reasonably be Materials or Supplies (fasteners, adhesives, connectors) are consistently categorized as Supplies since they are consumables rather than raw structural materials. Claude notes any ambiguous categorizations in `extractionNotes`.
+**extractionNotes takes care of ambiguity and aids in debugging** -
+Any problems with receipt processing will be logged as extractionNotes. This can be anything from failure to extract data (not a receipt, blurry, etc.) to ambiguous equipment categorization. This helps with debugging or viewing AI's logic.
 
 ---
 
@@ -153,7 +133,3 @@ Items that could reasonably be Materials or Supplies (fasteners, adhesives, conn
 - **Pagination** — the receipt list currently loads all records at once; pagination or infinite scroll would be needed at scale
 
 ---
-
-## License
-
-MIT

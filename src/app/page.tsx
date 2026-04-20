@@ -10,7 +10,7 @@ export default function Home() {
 
   const generateUploadUrl = useMutation(api.receipts.generateUploadUrl);
   const createReceipt = useMutation(api.receipts.createReceipt);
-  const receipts = useQuery(api.receipts.getAllReceipts);
+  const receipts = useQuery(api.queries.getAllReceipts);
   const processReceipt = useAction(api.processReceipt.processReceipt);
   const deleteReceipt = useMutation(api.receipts.deleteReceipt);
 

@@ -9,6 +9,7 @@
  */
 
 import type * as processReceipt from "../processReceipt.js";
+import type * as queries from "../queries.js";
 import type * as receipts from "../receipts.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   processReceipt: typeof processReceipt;
+  queries: typeof queries;
   receipts: typeof receipts;
 }>;
 

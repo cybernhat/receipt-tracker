@@ -26,14 +26,6 @@ export const createReceipt = mutation({
     }
 });
 
-// fetches all receipts
-export const getAllReceipts = query({
-    args: {},
-    handler: async (ctx) => {
-        return await ctx.db.query("receipts").order("desc").collect();
-    }
-});
-
 // deletes a receipt
 export const deleteReceipt = mutation({
     args: {
@@ -47,5 +39,8 @@ export const deleteReceipt = mutation({
 })
 
 // export const viewReceiptItems = query({
-//     args: {receiptId},
+//     args: { receiptId: v.id("receipts") },
+//     handler: async (ctx, args) => {
+//         const receiptId = await.db.query("")
+//     }
 // })

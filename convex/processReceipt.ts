@@ -50,8 +50,8 @@ export const updateReceiptData = mutation({
     handler: async (ctx, args) => {
         const { id, ...rest } = args;
         await ctx.db.patch(id, rest);
-        const updatedReceipt = await ctx.db.get(id);
-        console.log(updatedReceipt);
+        // const updatedReceipt = await ctx.db.get(id);
+        // console.log(updatedReceipt);
     }
 });
 
