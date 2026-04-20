@@ -122,13 +122,15 @@ Any problems with receipt processing will be logged as extractionNotes. This can
 
 ---
 
-## What I'd Improve With More Time
+## Areas for Improvement
+ - **Specific Query for AI Agent** - current approach is to get all receipts/items for agent, which costs a lot of token. I'd reduce token use by adding specific queries instead.
 
+## What I'd Add With More Time
 - **PDF receipt summary export** — generate a formatted PDF summary for any stored receipt using `react-pdf`, with a breakdown by category and line item table
 - **Project tagging** — associate receipts with specific job sites or projects (e.g. "Kitchen Renovation") for per-project expense tracking. This would require a separate `projects` table and a relationship between receipts and projects
 - **Authentication** — add user accounts so multiple contractors can use the same instance with isolated data
 - **Duplicate detection** — flag receipts that appear to be duplicates based on vendor, date, and total amount
-- **Export to CSV** — allow contractors to export their expense data for use in accounting software
+- **Multiple processes** — allow multiple receipts to be uploaded and processed
 - **Retry mechanism** — automatically retry failed extractions instead of requiring manual deletion and re-upload
 - **Pagination** — the receipt list currently loads all records at once; pagination or infinite scroll would be needed at scale
 

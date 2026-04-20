@@ -19,7 +19,7 @@ export const getAllCompletedReceipts = query({
 })
 
 // Flattens receipt items
-export const getReceiptItemsForAgent = query({
+export const getReceiptItems = query({
     handler: async (ctx, args: {}) => {
         // get all receipts
         const receipts = await ctx.db
