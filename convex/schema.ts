@@ -12,34 +12,34 @@ export default defineSchema({
             v.literal("completed"),
             v.literal("failed")
         ),
-        fileUrl: v.string(),
         fileName: v.string(),
         uploadedAt: v.number(),
-        storageId: v.string(),
+        storageId: v.id("_storage"),
 
         // RAW OCR output - stores what Claude actually sees
         rawText: v.optional(v.string()),
-        
+
 
         // Data extracted by Claude
         vendor: v.optional(v.string()),
         date: v.optional(v.string()),
         totalAmount: v.optional(v.number()),
-        category: v.optional(
-            v.union(
-                v.literal("Materials"),
-                v.literal("Tools & Equipment"),
-                v.literal("Supplies"),
-                v.literal("Fuel & Transportation"),
-                v.literal("Misc")
-            )
-        ),
 
         // Items on the receipt
         items: v.optional(
             v.array(
                 v.object({
                     name: v.string(),
+                    type: v.optional(v.string()),
+                    category: v.optional(
+                        v.union(
+                            v.literal("Materials"),
+                            v.literal("Tools & Equipment"),
+                            v.literal("Supplies"),
+                            v.literal("Fuel & Transportation"),
+                            v.literal("Misc")
+                        )
+                    ),
                     quantity: v.optional(v.number()),
                     price: v.optional(v.number())
                 })

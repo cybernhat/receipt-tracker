@@ -1,65 +1,158 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { responseCookiesToRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export default function Home() {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const generateUploadUrl = useMutation(api.receipts.generateUploadUrl);
+  const createReceipt = useMutation(api.receipts.createReceipt);
+  const receipts = useQuery(api.receipts.getAllReceipts);
+
+  // File handling function in order to store uploaded file to db
+  async function handleFileUpload(file: File) {
+    if (!file) return;
+
+    // Allows specific file type (images and PDFs)
+    const validTypes = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      alert("File type not valid. Please upload an image or PDF file.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Call temporary upload URL method from convex/receipt
+      const uploadUrl = await generateUploadUrl();
+
+      // Upload the file directly to storage
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type},
+        body: file
+      });
+      
+      const { storageId } = await response.json();
+      
+      // Create receipt in the database
+      await createReceipt({
+        storageId,
+        fileName: file.name
+      });
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please try again");
+    } finally {
+      setUploading(false);
+    };
+  }
+
+  // Drag/drop feature
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-gray-950 text-white p-8">
+      <div className="max-w-3xl mx-auto">
+
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold">Receipt Tracker</h1>
+          <p className="text-gray-400 mt-1 text-sm">
+            Upload receipts and query your expenses with AI
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Upload Zone */}
+        <div
+          className={`border-2 border-dashed rounded-xl p-10 text-center mb-8 transition-colors ${
+            dragOver
+              ? "border-blue-500 bg-blue-500/10"
+              : "border-gray-700 hover:border-gray-500"
+          }`}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+        >
+          <p className="text-gray-300 mb-1">
+            {uploading ? "Uploading..." : "Drop your receipt here"}
+          </p>
+          <p className="text-gray-500 text-sm mb-4">Supports JPG, PNG, PDF</p>
+          <label className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            uploading
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-900 hover:bg-gray-200"
+          }`}>
+            {uploading ? "Uploading..." : "Choose File"}
+            <input
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/png,application/pdf"
+              disabled={uploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </label>
         </div>
-      </main>
-    </div>
+
+        {/* Receipt List */}
+        <div>
+          <h2 className="text-lg font-medium mb-4">Receipts</h2>
+          {receipts === undefined ? (
+            <p className="text-gray-500 text-sm">Loading...</p>
+          ) : receipts.length === 0 ? (
+            <p className="text-gray-500 text-sm">
+              No receipts yet. Upload one above.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {receipts.map((receipt) => (
+                <div
+                  key={receipt._id}
+                  className="bg-gray-900 rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-sm">
+                      {receipt.vendor ?? receipt.fileName}
+                    </p>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      {receipt.date ?? new Date(receipt.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {receipt.totalAmount
+                        ? `$${receipt.totalAmount.toFixed(2)}`
+                        : "—"}
+                    </p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
+                      receipt.status === "completed"
+                        ? "bg-green-500/20 text-green-400"
+                        : receipt.status === "failed"
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-yellow-500/20 text-yellow-400"
+                    }`}>
+                      {receipt.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </main>
   );
 }
