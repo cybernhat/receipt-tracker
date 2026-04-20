@@ -1,37 +1,159 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Receipt Tracker
+
+A contractor expense tracking tool that ingests receipt images and PDFs, extracts structured data using AI, and allows natural language querying of expenses.
+
+---
+
+## Built With
+
+- **[Next.js](https://nextjs.org/)** — React framework for the frontend
+- **[Convex](https://convex.dev/)** — Backend-as-a-service: serverless functions, database, and file storage
+- **[Vercel AI SDK](https://sdk.vercel.ai/)** — AI agent and streaming for natural language queries
+- **[Anthropic Claude](https://anthropic.com/)** — Vision model for OCR and receipt data extraction
+- **[Tailwind CSS](https://tailwindcss.com/)** — Utility-first styling
+
+---
+
+## Features
+
+- Upload receipt images (JPG, PNG) or PDFs via drag-and-drop or file picker
+- AI-powered OCR extracts structured data from receipts including vendor, date, line items, and total
+- Each line item is individually categorized (Materials, Tools & Equipment, Supplies, Fuel & Transportation, Misc) and typed (e.g. Lumber, Concrete, Fasteners)
+- Processed receipts are persisted in a Convex database with full item-level detail
+- Failed uploads (non-receipts, unreadable files) are flagged with an explanation and can be deleted
+- Natural language querying of expense data via an AI agent (e.g. "How much did I spend on materials at Home Depot this month?")
+
+---
+
+## Project Structure
+
+```
+receipt-tracker/
+├── src/
+│   └── app/
+│       ├── page.tsx          # Main UI — upload, receipt list, query interface
+│       └── layout.tsx        # Root layout with Convex provider
+├── convex/
+│   ├── schema.ts             # Database schema
+│   ├── receipts.ts           # CRUD mutations and queries
+│   └── processReceipt.ts     # OCR action — calls Claude, updates DB
+└── .env.local                # API keys (not committed)
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- A [Convex](https://convex.dev/) account (free)
+- An [Anthropic](https://console.anthropic.com/) API key
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/Cybernhat/receipt-tracker.git
+cd receipt-tracker
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Set up environment variables — create a `.env.local` file in the project root:
+
+```bash
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+```
+
+4. Initialize Convex
+
+```bash
+npx convex dev
+```
+
+This will prompt you to log in and create a project. Once connected, it will automatically add `NEXT_PUBLIC_CONVEX_URL` to your `.env.local`.
+
+5. Add your Anthropic API key to Convex's environment
+
+```bash
+npx convex env set ANTHROPIC_API_KEY your_anthropic_api_key_here
+```
+
+6. Start the development server in a separate terminal
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+7. Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Note: Keep `npx convex dev` running in a separate terminal while developing. It syncs your backend functions to the cloud in real time.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## How It Works
 
-To learn more about Next.js, take a look at the following resources:
+### Ingestion Pipeline
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+User uploads receipt (image/PDF)
+        ↓
+File stored in Convex Storage → storageId saved to DB (status: "processing")
+        ↓
+Convex action retrieves file, converts to base64
+        ↓
+Claude Vision analyzes the receipt image
+        ↓
+Structured JSON extracted (vendor, date, items, totals)
+        ↓
+DB record updated (status: "completed")
+        ↓
+UI updates in real time via Convex's reactive queries
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Query Agent
 
-## Deploy on Vercel
+The AI agent receives the user's natural language question, queries the Convex database for relevant receipt and item data, and returns a conversational answer with specific figures.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Key Design Decisions & Assumptions
 
+**Category per item, not per receipt**
+A single receipt from Home Depot might contain lumber (Materials), a hammer (Tools & Equipment), and tape (Supplies). Assigning one category to the whole receipt would lose that granularity. Instead, each line item is individually categorized by Claude during extraction.
+
+**`storageId` over `fileUrl`**
+Convex Storage and Convex Database are separate systems. Rather than storing a URL that could expire, we store the `storageId` and generate a fresh URL on demand using `ctx.storage.getUrl(storageId)`. This is more reliable and avoids stale URL issues.
+
+**Raw text stored alongside structured data**
+The full OCR text Claude reads from the receipt is stored in `rawText`. This provides a fallback for debugging misparses and makes the data more auditable.
+
+**Failed uploads are surfaced, not silently deleted**
+If Claude determines the uploaded file is not a receipt, or cannot read it, the record is marked `failed` with an explanation in `extractionNotes`. The user can then manually delete it. This avoids silent data loss and gives the contractor context on what went wrong.
+
+**Screws, tape, and connectors are categorized as Supplies**
+Items that could reasonably be Materials or Supplies (fasteners, adhesives, connectors) are consistently categorized as Supplies since they are consumables rather than raw structural materials. Claude notes any ambiguous categorizations in `extractionNotes`.
+
+---
+
+## What I'd Improve With More Time
+
+- **PDF receipt summary export** — generate a formatted PDF summary for any stored receipt using `react-pdf`, with a breakdown by category and line item table
+- **Project tagging** — associate receipts with specific job sites or projects (e.g. "Kitchen Renovation") for per-project expense tracking. This would require a separate `projects` table and a relationship between receipts and projects
+- **Authentication** — add user accounts so multiple contractors can use the same instance with isolated data
+- **Duplicate detection** — flag receipts that appear to be duplicates based on vendor, date, and total amount
+- **Export to CSV** — allow contractors to export their expense data for use in accounting software
+- **Retry mechanism** — automatically retry failed extractions instead of requiring manual deletion and re-upload
+- **Pagination** — the receipt list currently loads all records at once; pagination or infinite scroll would be needed at scale
+
+---
+
+## License
+
+MIT

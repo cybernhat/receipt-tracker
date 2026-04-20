@@ -45,3 +45,7 @@ export const deleteReceipt = mutation({
         await ctx.db.delete(args.id);
     }
 })
+
+// export const viewReceiptItems = query({
+//     args: {receiptId},
+// })
