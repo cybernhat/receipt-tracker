@@ -15,7 +15,15 @@ What is convex?
     real-time updates
     server logic
  - essentially database + api in one as opposed to database seperated from api
+ 
+ - query: access db
+ - mutation: changes db
+ - action: used for external api
 
  defined database schema in convex/schema.ts
 
- 
+ OCR - ooptical character recognition
+
+
+TRADEOFFS:
+using claude API only allows text. I can use OPenAi DALL-E to prompt for images. 

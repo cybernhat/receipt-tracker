@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as processReceipt from "../processReceipt.js";
 import type * as receipts from "../receipts.js";
 
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  processReceipt: typeof processReceipt;
   receipts: typeof receipts;
 }>;
 
