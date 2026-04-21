@@ -1,4 +1,5 @@
 import { query } from "./_generated/server";
+import { v } from "convex/values";
 
 // get all receipts
 export const getAllReceipts = query({
@@ -35,5 +36,12 @@ export const getReceiptItems = query({
             receiptDate: receipt.date,
             receiptId: receipt._id
         }))).flat()
+    }
+})
+
+export const getReceiptById = query({
+    args: { receiptId: v.id("receipts") },
+    handler: async (ctx, {receiptId} ) =>  {
+        return await ctx.db.get(receiptId);
     }
 })

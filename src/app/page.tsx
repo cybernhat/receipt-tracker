@@ -5,16 +5,18 @@ import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export default function Home() {
-  const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-
+  
+  const receipts = useQuery(api.queries.getAllReceipts);
+  const deleteReceipt = useMutation(api.receipts.deleteReceipt);
+  
+  // File handling function in order to store uploaded file to db
+  const [uploading, setUploading] = useState(false);
   const generateUploadUrl = useMutation(api.receipts.generateUploadUrl);
   const createReceipt = useMutation(api.receipts.createReceipt);
-  const receipts = useQuery(api.queries.getAllReceipts);
   const processReceipt = useAction(api.processReceipt.processReceipt);
-  const deleteReceipt = useMutation(api.receipts.deleteReceipt);
 
-  // File handling function in order to store uploaded file to db
+
   async function handleFileUpload(file: File) {
     if (!file) return;
 
