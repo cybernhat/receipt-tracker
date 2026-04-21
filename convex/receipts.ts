@@ -30,10 +30,12 @@ export const createReceipt = mutation({
 export const deleteReceipt = mutation({
     args: {
         id: v.id("receipts"),
-        storageId: v.id("_storage")
     },
     handler: async (ctx, args) => {
-        await ctx.storage.delete(args.storageId);
+        const receipt = await ctx.db.get(args.id)
+        if (!receipt) throw new Error("Receipt not found");
+
+        await ctx.storage.delete(receipt.storageId);
         await ctx.db.delete(args.id);
     }
 })

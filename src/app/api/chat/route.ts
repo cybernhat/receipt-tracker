@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     Answer questions about spending clearly and consisely.
     When you have price amounts, format dollar amounts like $123.45.
     If you're unsure, say so - DO NOT make up figures.
+    If the user asks a question about spending when there are no receipts to be found in the database, suggest User to use the "+" button to upload a receipt for processing.
     
     When a receipt is processed and you receive the result:
     - If status is "completed", respond with:

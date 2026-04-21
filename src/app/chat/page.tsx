@@ -9,6 +9,7 @@ import { api } from "../../../convex/_generated/api";
 export default function ChatPage() {
     const { messages, sendMessage, status } = useChat();
     const [input, setInput] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
     const generateUploadUrl = useMutation(api.receipts.generateUploadUrl);
 
     // Auto scroll when new messages are generated in chat
@@ -37,6 +38,7 @@ export default function ChatPage() {
 
         // file process logic
         try {
+            setIsUploading(true);
             // get url
             const uploadUrl = await generateUploadUrl();
 
@@ -58,6 +60,7 @@ export default function ChatPage() {
             console.error("Upload failed:", error);
             alert("Upload failed. Please try again");
         } finally {
+            setIsUploading(false);
             const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
         }
@@ -81,26 +84,29 @@ export default function ChatPage() {
                     </div>
                 )}
 
-                {messages.map((m) => (
-                    <div
-                        key={m.id}
-                        className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                        <div className={`max-w-[80%] rounded-xl px-4 py-2 text-sm whitespace-pre-wrap ${m.role === "user" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-100"
-                            }`}>
-                            {m.parts
-                                .filter((p) => p.type === "text")
-                                .map((p, i) => (
-                                    <span key={i}>{p.type === "text" ? p.text : ""}</span>
-                                ))}
+                {messages
+                // filters out storageId and fileName providing message after image upload
+                    .filter(m => !(m.role === "user" && m.parts?.some(p => p.type === "text" && p.text.includes("storageId:"))))
+                    .map((m) => (
+                        <div
+                            key={m.id}
+                            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div className={`max-w-[80%] rounded-xl px-4 py-2 text-sm whitespace-pre-wrap ${m.role === "user" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-100"
+                                }`}>
+                                {m.parts
+                                    .filter((p) => p.type === "text")
+                                    .map((p, i) => (
+                                        <span key={i}>{p.type === "text" ? p.text : ""}</span>
+                                    ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
 
                 {status === "streaming" && (
                     <div className="flex justify-start">
                         <div className="bg-gray-800 rounded-xl px-4 py-2 text-sm text-gray-400">
-                            Thinking...
+                            {isUploading ? "Processing..." : "Thinking..."}
                         </div>
                     </div>
                 )}
