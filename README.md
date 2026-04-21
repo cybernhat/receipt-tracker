@@ -124,6 +124,7 @@ Any problems with receipt processing will be logged as extractionNotes. This can
 
 ## Areas for Improvement
  - **Specific Query for AI Agent** - current approach is to get all receipts/items for agent, which costs a lot of token. I'd reduce token use by adding specific queries instead.
+ - **Use Redis for Cashing** - Similarly to the first point, the agent queries for every single prompt request, and JSON itself costs a lot of token. I'd implement caching through Redis to fix this issue.
 
 ## What I'd Add With More Time
 - **PDF receipt summary export** — generate a formatted PDF summary for any stored receipt using `react-pdf`, with a breakdown by category and line item table

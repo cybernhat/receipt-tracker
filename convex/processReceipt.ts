@@ -158,7 +158,7 @@ Category guidelines:
             }
             // console.log("Claude raw response: ", content.text);
 
-            // gets rid of piece of shit ```json ```
+            // gets rid of  ```json ```
             const cleanedText = content.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
             const extracted = JSON.parse(cleanedText);

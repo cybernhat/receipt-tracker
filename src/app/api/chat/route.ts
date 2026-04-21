@@ -17,8 +17,6 @@ export async function POST(req: Request) {
       .join("") ?? m.content ?? ""
   }));
 
-  console.log("formatted:", JSON.stringify(formattedMessages, null, 2));
-  // Convert v6 UIMessage to ModelMessage format 
   const result = streamText({
     model: anthropic("claude-sonnet-4-5"),
     system: `You are an expense assistant for contractors.
