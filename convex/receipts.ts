@@ -1,5 +1,6 @@
 import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 // Generates upload URL for the frontend to upload a file directly to Convex storage
 export const generateUploadUrl = mutation({
@@ -36,7 +37,7 @@ export const deleteReceipt = mutation({
         if (!receipt) throw new Error("Receipt not found");
 
         await ctx.storage.delete(receipt.storageId);
-        await ctx.db.delete(args.id);
+        await ctx.db.delete(args.id as Id<"receipts">);
     }
 })
 

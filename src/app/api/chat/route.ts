@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     "Receipt failed to process.
      Notes: [extractionNotes]"`,
     messages: formattedMessages,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(100),
     tools: {
       getReceipts: tool({
         description:
@@ -57,6 +57,14 @@ export async function POST(req: Request) {
           }));
         },
       }),
+      getFailedReceipts: tool({
+        description:
+        "Fetch all receipts that failed to be process. Use this for when the user asks questions about receipts that failed to be processed.",
+        inputSchema: z.object({}),
+        execute: async () => {
+          return await convex.query(api.queries.getAllFailedReceipts);
+        }
+      }),
       getLineItems: tool({
         description:
           "Fetch all individual line items across all receipts, each tagged with vendor and date. Use this for questions about specific products, categories (Materials, Tools & Equipment, Supplies, Fuel & Transportation, Misc), or item-level spending.",
@@ -67,12 +75,12 @@ export async function POST(req: Request) {
       }),
       ProcessReceipt: tool({
         description:
-        "Create a receipt and then process it using the storageId given by the POST method to Convex storage. Use this when user uploads an image or PDF file.",
+          "Create a receipt and then process it using the storageId given by the POST method to Convex storage. Use this when user uploads an image or PDF file.",
         inputSchema: z.object({
           storageId: z.string(),
           fileName: z.string()
         }),
-        execute: async({ storageId, fileName }) => {
+        execute: async ({ storageId, fileName }) => {
           const receiptId = await convex.mutation(api.receipts.createReceipt, {
             storageId: storageId as Id<"_storage">,
             fileName
@@ -82,6 +90,18 @@ export async function POST(req: Request) {
             storageId: storageId as Id<"_storage">
           })
           return await convex.query(api.queries.getReceiptById, { receiptId })
+        }
+      }),
+      DeleteReceipt: tool({
+        description:
+          "Delete a receipt by its ID. Use this when the user asks to delete a receipt. When deleting a receipt, always use the receiptId field from the tool result, not the storageId or any other ID.",
+        inputSchema: z.object({
+          receiptId: z.string()
+        }),
+        execute: async ({ receiptId }) => {
+          await convex.mutation(api.receipts.deleteReceipt, {
+            id: receiptId as Id<"receipts">
+          })
         }
       })
     },

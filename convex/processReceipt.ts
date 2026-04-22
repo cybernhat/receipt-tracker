@@ -185,7 +185,7 @@ Category guidelines:
                 items: extracted.items
 
             });
-
+            
         } catch (error) {
             await ctx.runMutation(api.processReceipt.updateReceiptData, {
                 id: args.receiptId,

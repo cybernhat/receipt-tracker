@@ -41,7 +41,17 @@ export const getReceiptItems = query({
 
 export const getReceiptById = query({
     args: { receiptId: v.id("receipts") },
-    handler: async (ctx, {receiptId} ) =>  {
+    handler: async (ctx, { receiptId }) => {
         return await ctx.db.get(receiptId);
+    }
+})
+
+// queries for all failed receipts
+export const getAllFailedReceipts = query({
+    handler: async ctx => {
+        return await ctx.db.query("receipts")
+            .filter(query => query.eq(query.field('status'), "failed"))
+            .order("desc")
+            .collect();
     }
 })
