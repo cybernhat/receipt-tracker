@@ -1,6 +1,6 @@
 # Receipt Tracker
 
-A contractor expense tracking tool that ingests receipt images and PDFs, extracts structured data using AI, and allows natural language querying of expenses.
+A contractor expense tracking AI agent that ingests receipt images and PDFs, extracts structured data using AI, and allows natural language querying of expenses.
 
 ---
 
@@ -16,10 +16,8 @@ A contractor expense tracking tool that ingests receipt images and PDFs, extract
 
 ## Features
 
-- Image Upload
-    - Upload or drag-and-drop receipt in the form of PDF or image files. 
-- AI Querying
-    - Natural language querying of expense data via an AI agent.
+- AI Agent that takes care of receipt upload, processing, and deletion.
+- AI Agent allows natural language querying of expenses.
 ---
 
 ## Getting Started
@@ -92,8 +90,6 @@ Claude Vision analyzes the receipt image
 Structured JSON extracted 
         ↓
 DB record updated (status: "completed")
-        ↓
-UI updates in real time via Convex's reactive queries
 ```
 
 ### Query Agent
@@ -106,9 +102,6 @@ The AI agent receives the user's natural language question, queries the Convex d
 
 **Category per item, not per receipt** - 
 A single receipt from Home Depot might contain lumber (Materials), a hammer (Tools & Equipment), and tape (Supplies). Assigning one category to the whole receipt would lose that granularity. Instead, each line item is individually categorized by Claude during extraction.
-
-**`storageId` over `fileUrl`** - 
-Convex Storage and Convex Database are separate systems. Rather than storing a URL that could expire, we store the `storageId` and generate a fresh URL on demand using `ctx.storage.getUrl(storageId)`. This is more reliable and avoids stale URL issues.
 
 **Raw text stored alongside structured data** - 
 The full OCR text Claude reads from the receipt is stored in `rawText`. This provides a fallback for debugging misparses and makes the data more auditable.
@@ -123,8 +116,9 @@ Any problems with receipt processing will be logged as extractionNotes. This can
 ---
 
 ## Areas for Improvement
- - **Specific Query for AI Agent** - current approach is to get all receipts/items for agent, which costs a lot of token. I'd reduce token use by adding specific queries instead.
+ - **Specific Query for AI Agent** - Current approach is to get all receipts/items for agent, which costs a lot of token. I'd reduce token use by adding specific queries instead.
  - **Use Redis for Cashing** - Similarly to the first point, the agent queries for every single prompt request, and JSON itself costs a lot of token. I'd implement caching through Redis to fix this issue.
+ - **Optimizing AI tooling resource usage** - Currently, every tool call sends Claude the entire conversation, which is extremely costly. I'd add some sort of summarization or message windowing to minimize token use even more.
 
 ## What I'd Add With More Time
 - **PDF receipt summary export** — generate a formatted PDF summary for any stored receipt using `react-pdf`, with a breakdown by category and line item table
